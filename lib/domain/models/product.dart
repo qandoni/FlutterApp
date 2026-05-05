@@ -103,7 +103,7 @@ class Product {
   }
 
   String get statusText =>
-      status == ProductStatus.available ? '✅ Доступен' : '🔴 Занят';
+      status == ProductStatus.available ? 'Доступен' : 'Занят';
   String get takenInfo {
     if (status != ProductStatus.taken) return '';
     return 'Взял: ${takenByUserId ?? 'неизвестно'}, ${takenAt?.toLocal()}';

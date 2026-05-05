@@ -32,44 +32,22 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   Future<bool> _requestGalleryPermission() async {
     final status = await Permission.photos.request();
-
-    if (status.isGranted) {
-      return true;
-    }
-
-    if (status.isPermanentlyDenied) {
-      openAppSettings();
-    }
-
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Нет доступа к галерее')));
-
+    if (status.isGranted) return true;
+    if (status.isPermanentlyDenied) openAppSettings();
+    _showSnackBar('Нет доступа к галерее', isError: true);
     return false;
   }
 
   Future<bool> _requestCameraPermission() async {
     final status = await Permission.camera.request();
-
-    if (status.isGranted) {
-      return true;
-    }
-
-    if (status.isPermanentlyDenied) {
-      openAppSettings();
-    }
-
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Нет доступа к камере')));
-
+    if (status.isGranted) return true;
+    if (status.isPermanentlyDenied) openAppSettings();
+    _showSnackBar('Нет доступа к камере', isError: true);
     return false;
   }
 
   Future<void> _pickImage() async {
-    final hasPermission = await _requestGalleryPermission();
-    if (!hasPermission) return;
-
+    if (!await _requestGalleryPermission()) return;
     try {
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
@@ -77,7 +55,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
         maxHeight: 512,
         imageQuality: 85,
       );
-
       if (image != null) {
         setState(() {
           _selectedImage = File(image.path);
@@ -85,16 +62,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка при выборе изображения: $e')),
-      );
+      _showSnackBar('Ошибка при выборе изображения: $e', isError: true);
     }
   }
 
   Future<void> _takePhoto() async {
-    final hasPermission = await _requestCameraPermission();
-    if (!hasPermission) return;
-
+    if (!await _requestCameraPermission()) return;
     try {
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.camera,
@@ -102,7 +75,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
         maxHeight: 512,
         imageQuality: 85,
       );
-
       if (image != null) {
         setState(() {
           _selectedImage = File(image.path);
@@ -110,32 +82,41 @@ class _AddProductScreenState extends State<AddProductScreen> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Ошибка при съемке: $e')));
+      _showSnackBar('Ошибка при съемке: $e', isError: true);
     }
   }
 
   void _showImageSourceDialog() {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Выберите изображение'),
-          content: Column(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const Text(
+                'Выберите источник',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
               ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Из галереи'),
+                leading: const Icon(
+                  Icons.photo_library,
+                  color: Color(0xFF2C3E50),
+                ),
+                title: const Text('Галерея'),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage();
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('Сделать фото'),
+                leading: const Icon(Icons.camera_alt, color: Color(0xFF2C3E50)),
+                title: const Text('Камера'),
                 onTap: () {
                   Navigator.pop(context);
                   _takePhoto();
@@ -143,17 +124,42 @@ class _AddProductScreenState extends State<AddProductScreen> {
               ),
             ],
           ),
-        );
-      },
+        ),
+      ),
+    );
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.redAccent : Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Добавить товар')),
+      appBar: AppBar(
+        title: const Text('Добавить товар'),
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF1E2A3E), Color(0xFF2C3E50)],
+            ),
+          ),
+        ),
+        elevation: 0,
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           children: [
             Form(
@@ -167,16 +173,23 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       width: double.infinity,
                       height: 200,
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(24),
                         border: Border.all(
-                          color: Colors.grey.shade400,
-                          style: BorderStyle.solid,
+                          color: Colors.grey.shade300,
+                          width: 1.5,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.shade200,
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: _selectedImage != null
                           ? ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(24),
                               child: Image.file(
                                 _selectedImage!,
                                 fit: BoxFit.cover,
@@ -186,9 +199,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
-                                  Icons.add_photo_alternate,
-                                  size: 64,
-                                  color: Colors.grey.shade600,
+                                  Icons.add_a_photo_outlined,
+                                  size: 56,
+                                  color: Colors.grey.shade500,
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
@@ -199,115 +212,209 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Название товара',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Введите название товара';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  TextFormField(
-                    controller: _descriptionController,
-                    decoration: const InputDecoration(
-                      labelText: 'Описание',
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 3,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Введите описание товара';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  TextFormField(
-                    controller: _priceController,
-                    decoration: const InputDecoration(
-                      labelText: 'Цена',
-                      border: OutlineInputBorder(),
-                      suffixText: '₽',
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Введите цену';
-                      }
-                      if (double.tryParse(value) == null) {
-                        return 'Введите корректное число';
-                      }
-                      return null;
-                    },
-                  ),
                   const SizedBox(height: 24),
 
-                  ElevatedButton.icon(
-                    onPressed: _generateQRCode,
-                    icon: const Icon(Icons.qr_code),
-                    label: const Text('Сгенерировать QR-код'),
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 50),
+                  // Поле "Название"
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      labelText: 'Название товара',
+                      labelStyle: const TextStyle(color: Colors.grey),
+                      prefixIcon: const Icon(
+                        Icons.inventory_2_outlined,
+                        color: Color(0xFF2C3E50),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF2C3E50),
+                          width: 2,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    validator: (value) => value == null || value.isEmpty
+                        ? 'Введите название'
+                        : null,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Поле "Описание"
+                  TextFormField(
+                    controller: _descriptionController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      labelText: 'Описание',
+                      labelStyle: const TextStyle(color: Colors.grey),
+                      prefixIcon: const Icon(
+                        Icons.description_outlined,
+                        color: Color(0xFF2C3E50),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF2C3E50),
+                          width: 2,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    validator: (value) => value == null || value.isEmpty
+                        ? 'Введите описание'
+                        : null,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Поле "Цена"
+                  TextFormField(
+                    controller: _priceController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Цена',
+                      labelStyle: const TextStyle(color: Colors.grey),
+                      prefixIcon: const Icon(
+                        Icons.currency_ruble,
+                        color: Color(0xFF2C3E50),
+                      ),
+                      suffixText: '₽',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF2C3E50),
+                          width: 2,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Введите цену';
+                      if (double.tryParse(value) == null)
+                        return 'Некорректное число';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Кнопка генерации QR
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton.icon(
+                      onPressed: _generateQRCode,
+                      icon: const Icon(Icons.qr_code_rounded),
+                      label: const Text('Сгенерировать QR-код'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2C3E50),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 2,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
+
             if (_qrData != null) ...[
               const SizedBox(height: 32),
-              const Divider(),
-              const SizedBox(height: 16),
-              const Text(
-                'QR-код товара:',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(8),
+              const Divider(thickness: 1, color: Colors.grey),
+              const SizedBox(height: 24),
+              Card(
+                elevation: 6,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
                 ),
-                child: Column(
-                  children: [
-                    QrImageView(
-                      data: _qrData!,
-                      version: QrVersions.auto,
-                      size: 200,
-                      backgroundColor: Colors.white,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    Text(
-                      'ID: ${_generatedProduct!.id}',
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: _saveProduct,
-                            icon: const Icon(Icons.save),
-                            label: const Text('Сохранить'),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'QR-код товара',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E2A3E),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.shade100,
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: QrImageView(
+                          data: _qrData!,
+                          version: QrVersions.auto,
+                          size: 200,
+                          backgroundColor: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      GestureDetector(
+                        onTap: () {
+                          _showSnackBar('ID скопирован', isError: false);
+                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.content_copy,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'ID: ${_generatedProduct!.id}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton.icon(
+                          onPressed: _saveProduct,
+                          icon: const Icon(Icons.save_alt),
+                          label: const Text('Сохранить товар'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 2,
                           ),
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -338,7 +445,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   void _saveProduct() async {
     if (_generatedProduct != null) {
-      // Сохраняем в Firestore
       await _firestoreService.addProduct(_generatedProduct!);
       widget.onProductAdded(_generatedProduct!);
       if (mounted) Navigator.pop(context);

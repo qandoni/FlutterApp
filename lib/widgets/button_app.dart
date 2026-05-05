@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
 class ButtonApp extends StatelessWidget {
-  const ButtonApp({super.key, this.onPressed, required this.text});
+  const ButtonApp({
+    super.key,
+    this.onPressed,
+    required this.text,
+    required bool isGradient,
+  });
 
   final VoidCallback? onPressed;
   final String text;
