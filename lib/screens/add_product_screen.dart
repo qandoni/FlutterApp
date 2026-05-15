@@ -146,16 +146,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Добавить товар'),
-        backgroundColor: Colors.transparent,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF1E2A3E), Color(0xFF2C3E50)],
-            ),
-          ),
-        ),
+        backgroundColor: Color.fromARGB(255, 38, 137, 177),
         elevation: 0,
       ),
       body: SingleChildScrollView(
